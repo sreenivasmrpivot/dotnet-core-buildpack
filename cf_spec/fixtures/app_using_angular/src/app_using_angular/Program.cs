@@ -14,12 +14,10 @@ namespace app_using_angular
                           .AddCommandLine(args)
                           .Build();
 
-            var content_root = Path.Combine(Directory.GetCurrentDirectory(), "src", "app_using_angular");
-
             var host = new WebHostBuilder()
                         .UseKestrel()
                         .UseConfiguration(config)
-                        .UseContentRoot(content_root)
+                        .UseContentRoot(Directory.GetCurrentDirectory())
                         .UseIISIntegration()
                         .UseStartup<Startup>()
                         .Build();

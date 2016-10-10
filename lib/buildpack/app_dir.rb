@@ -47,30 +47,42 @@ module AspNetCoreBuildpack
     def deployment_file_project
       paths = with_project_json
       deployment_file = File.expand_path(File.join(@dir, DEPLOYMENT_FILE_NAME))
-      File.foreach(deployment_file, encoding: 'utf-8') do |line|
-        m = /project[ \t]*=[ \t]*(.*)/i.match(line)
-        if m
-          n = /.*([.](xproj|csproj))/i.match(m[1])
-          path = n ? Pathname.new(File.dirname(m[1])) : Pathname.new(m[1])
-          return path if paths.include?(path)
+
+      if File.exist?(deployment_file)
+        File.foreach(deployment_file, encoding: 'utf-8') do |line|
+          m = /project[ \t]*=[ \t]*(.*)/i.match(line)
+          if m
+            n = /.*([.](xproj|csproj))/i.match(m[1])
+            path = n ? Pathname.new(File.dirname(m[1])) : Pathname.new(m[1])
+            return path if paths.include?(path)
+          end
         end
-      end if File.exist?(deployment_file)
+      end
+
       nil
     end
 
     def main_project_path
-      path = deployment_file_project
+      deployment_path = deployment_file_project
       project_paths = with_project_json
-      multiple_paths = project_paths.any? && !project_paths.one?
-      fail 'Multiple paths contain a project.json file, but no .deployment file was used' if multiple_paths unless path
-      path = project_paths.first unless path
-      path if path
+
+      if deployment_path
+        path = deployment_path
+      elsif project_paths.one?
+        path = project_paths.first
+      elsif project_paths.count > 1
+        fail 'Multiple paths contain a project.json file, but no .deployment file was used'
+      else
+        path = nil
+      end
+
+      path
     end
 
     def published_project
       config_files = Dir.glob(File.join(@dir, '*.runtimeconfig.json'))
-      m = /(.*)[.]runtimeconfig[.]json/i.match(Pathname.new(config_files.first).basename.to_s) if config_files.one?
-      m[1].to_s unless m.nil?
+
+      Pathname.new(config_files.first).basename.to_s.split('.').first if config_files.one?
     end
   end
 end

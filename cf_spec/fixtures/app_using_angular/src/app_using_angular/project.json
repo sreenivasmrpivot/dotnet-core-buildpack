@@ -12,6 +12,13 @@
   },
 
   "publishOptions": {
+    "include": [
+      "wwwroot", "Views"
+    ],
+    "includeFiles": [
+      "appsettings.json"
+    ],
+
     "exclude": [
       "**.user",
       "**.vspscc"

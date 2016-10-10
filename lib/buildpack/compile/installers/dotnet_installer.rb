@@ -17,9 +17,12 @@
 require_relative '../../app_dir'
 require_relative '../dotnet_version'
 require_relative 'installer'
+require 'tmpdir'
 
 module AspNetCoreBuildpack
   class DotnetInstaller < Installer
+    attr_reader :source_code_dir
+
     CACHE_DIR = '.dotnet'.freeze
 
     def cache_dir
@@ -59,16 +62,11 @@ module AspNetCoreBuildpack
     end
 
     def path
-      bin_folder if File.exist?(File.join(@build_dir, cache_dir))
+      bin_folder('$HOME')
     end
 
-    def restore(out)
-      @shell.env['HOME'] = @build_dir
-      @shell.env['LD_LIBRARY_PATH'] = "$LD_LIBRARY_PATH:#{build_dir}/libunwind/lib"
-      @shell.env['PATH'] = "$PATH:#{path}"
-      project_list = @app_dir.with_project_json.join(' ')
-      cmd = "bash -c 'cd #{build_dir}; dotnet restore --verbosity minimal #{project_list}'"
-      @shell.exec(cmd, out)
+    def path_in_staging
+      bin_folder(@build_dir)
     end
 
     def should_install(app_dir)
@@ -77,16 +75,19 @@ module AspNetCoreBuildpack
       !(no_install || cached?)
     end
 
-    def should_restore(app_dir)
+    def should_compile(app_dir)
       @app_dir = app_dir
-      published_project = app_dir.published_project
-      !published_project
+      !app_dir.published_project
+    end
+
+    def in_runtime?
+      true
     end
 
     private
 
-    def bin_folder
-      File.join('$HOME'.freeze, CACHE_DIR)
+    def bin_folder(root_dir)
+      File.join(root_dir, CACHE_DIR)
     end
 
     def cache_folder

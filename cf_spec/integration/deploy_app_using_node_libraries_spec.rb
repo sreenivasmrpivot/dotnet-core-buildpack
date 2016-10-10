@@ -22,10 +22,6 @@ describe 'Deploying an app that relies on Node libraries during staging', type: 
 
       Capybara.current_driver = :poltergeist
       Capybara.run_server = false
-
-      minimum_acceptable_cf_api_version = '2.57.0'
-      skip_reason = ".profile script functionality not supported before CF API version #{minimum_acceptable_cf_api_version}"
-      Machete::RSpecHelpers.skip_if_cf_api_below(version: minimum_acceptable_cf_api_version, reason: skip_reason)
     end
 
     it 'displays a javascript homepage' do

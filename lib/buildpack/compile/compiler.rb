@@ -26,11 +26,14 @@ require 'pathname'
 
 module AspNetCoreBuildpack
   class Compiler
+    attr_reader :source_code_dir
+
     CACHE_NUGET_PACKAGES_VAR = 'CACHE_NUGET_PACKAGES'.freeze
     NUGET_CACHE_DIR = '.nuget'.freeze
 
     def initialize(build_dir, cache_dir, copier, installers, out)
       @build_dir = build_dir
+      @source_code_dir = build_dir
       @cache_dir = cache_dir
       @copier = copier
       @out = out
@@ -47,7 +50,9 @@ module AspNetCoreBuildpack
       step('Clearing NuGet packages cache', method(:clear_nuget_cache)) if should_clear_nuget_cache?
       step('Restoring NuGet packages cache', method(:restore_nuget_cache))
       run_installers
-      step('Restoring dependencies with Dotnet CLI', @dotnet.method(:restore)) if dotnet_should_restore
+      if dotnet_should_compile
+        step('Compiling application with Dotnet CLI', method(:compile_dotnet_app))
+      end
       step('Saving to buildpack cache', method(:save_cache))
       puts "ASP.NET Core buildpack is done creating the droplet\n"
       return true
@@ -62,8 +67,57 @@ module AspNetCoreBuildpack
       FileUtils.rm_rf(File.join(cache_dir, NUGET_CACHE_DIR))
     end
 
-    def dotnet_should_restore
-      dotnet.should_restore(@app_dir) unless dotnet.nil?
+    def compile_dotnet_app(out)
+      @source_code_dir = move_app_source_code(out)
+      @app_dir = AppDir.new(@source_code_dir)
+
+      @shell.env.merge! compilation_environment
+
+      project_list = @app_dir.with_project_json.join(' ')
+
+      cmd = "bash -c 'cd #{@source_code_dir}; dotnet restore --verbosity minimal #{project_list}'"
+      shell.exec(cmd, out)
+
+      main_project = @app_dir.main_project_path
+      fail 'No project found to build' if main_project.nil?
+
+      cmd = "bash -c 'cd #{@source_code_dir}; dotnet publish #{main_project} -o #{@build_dir} -c Release'"
+      shell.exec(cmd, out)
+    end
+
+    def move_app_source_code(out)
+      keep_in_droplet = %w(. .. .dotnet .profile libunwind)
+      dest_dir = Dir.mktmpdir
+      out.print "Moving application source code from #{@build_dir} to #{dest_dir}"
+      files_to_move = Dir.entries(@build_dir).select do |entry|
+        !keep_in_droplet.include?(entry)
+      end
+
+      Dir.chdir(@build_dir) do
+        FileUtils.mv(files_to_move, dest_dir)
+      end
+
+      dest_dir
+    end
+
+    def compilation_environment
+      compilation_env = {}
+      compilation_env['HOME'] = source_code_dir
+      compilation_env['LD_LIBRARY_PATH'] = "$LD_LIBRARY_PATH:#{@build_dir}/libunwind/lib"
+
+      binary_paths = @installers.map(&:path_in_staging).compact.join(':')
+
+      node_modules_paths = app_dir.with_project_json.map do |dir|
+        File.join(source_code_dir, dir, 'node_modules', '.bin')
+      end.compact.join(':')
+
+      compilation_env['PATH'] = "$PATH:#{binary_paths}:#{node_modules_paths}"
+
+      compilation_env
+    end
+
+    def dotnet_should_compile
+      dotnet.should_compile(@app_dir) unless dotnet.nil?
     end
 
     def nuget_cache_is_valid?
@@ -89,16 +143,23 @@ module AspNetCoreBuildpack
 
     def save_cache(out)
       @installers.select { |installer| !installer.cache_dir.nil? }.compact.each do |installer|
-        save_installer_cache(out, installer.name, installer.cache_dir)
+        if installer.in_runtime?
+          dir_to_copy = File.join(build_dir, installer.cache_dir)
+        else
+          dir_to_copy = File.join(source_code_dir, installer.cache_dir)
+        end
+        save_installer_cache(out, installer.name, dir_to_copy)
       end
-      save_installer_cache(out, 'Nuget packages'.freeze, NUGET_CACHE_DIR) if should_save_nuget_cache?
+      save_installer_cache(out, 'Nuget packages'.freeze, File.join(source_code_dir, NUGET_CACHE_DIR)) if should_save_nuget_cache?
     end
 
-    def save_installer_cache(out, name, installer_cache_dir)
-      copier.cp(File.join(build_dir, installer_cache_dir), cache_dir, out) if File.exist? File.join(build_dir, installer_cache_dir)
+    def save_installer_cache(out, name, dir_to_copy)
+      copier.cp(dir_to_copy, cache_dir, out) if File.exist? dir_to_copy
     rescue
+      destination_dir = File.join(cache_dir, File.basename(dir_to_copy))
+
       out.fail("Failed to save cached files for #{name}")
-      FileUtils.rm_rf(File.join(cache_dir, installer_cache_dir)) if File.exist? File.join(cache_dir, installer_cache_dir)
+      FileUtils.rm_rf(destination_dir) if File.exist? destination_dir
     end
 
     def should_clear_nuget_cache?

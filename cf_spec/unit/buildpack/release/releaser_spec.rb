@@ -37,6 +37,13 @@ describe AspNetCoreBuildpack::Releaser do
     end
 
     context 'project.json does not exist in published project' do
+      let(:profile_d_script) do
+        allow_any_instance_of(AspNetCoreBuildpack::DotnetInstaller).to receive(:cached?).and_return(true)
+        allow_any_instance_of(AspNetCoreBuildpack::LibunwindInstaller).to receive(:cached?).and_return(true)
+        subject.release(build_dir)
+        IO.read(File.join(build_dir, '.profile.d', 'startup.sh'))
+      end
+
       let(:web_process) do
         yml = YAML.load(subject.release(build_dir))
         yml.fetch('default_process_types').fetch('web')
@@ -46,10 +53,30 @@ describe AspNetCoreBuildpack::Releaser do
         File.open(File.join(build_dir, 'proj1.runtimeconfig.json'), 'w') { |f| f.write('a') }
       end
 
+      shared_examples 'writes the correct values in the .profile.d script' do
+        it 'set HOME env variable in profile.d' do
+          expect(profile_d_script).to include('export HOME=/app')
+        end
+
+        it 'set LD_LIBRARY_PATH in profile.d' do
+          expect(profile_d_script).to include('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/libunwind/lib')
+        end
+
+        it 'add Dotnet CLI to the PATH in profile.d' do
+          expect(profile_d_script).to include('$HOME/.dotnet')
+        end
+
+        it 'start command does not contain any exports' do
+          expect(web_process).not_to include('export')
+        end
+      end
+
       context 'project is self-contained' do
         before do
           File.open(File.join(build_dir, 'proj1'), 'w') { |f| f.write('a') }
         end
+
+        it_behaves_like 'writes the correct values in the .profile.d script'
 
         it 'does not raise an error because project.json is not required' do
           expect { subject.release(build_dir) }.not_to raise_error
@@ -65,85 +92,10 @@ describe AspNetCoreBuildpack::Releaser do
           File.open(File.join(build_dir, 'proj1.dll'), 'w') { |f| f.write('a') }
         end
 
+        it_behaves_like 'writes the correct values in the .profile.d script'
+
         it 'runs dotnet <dllname> for the project which has a runtimeconfig.json file' do
           expect(web_process).to match('dotnet proj1.dll')
-        end
-      end
-    end
-
-    context 'project.json exists' do
-      let(:proj1) { File.join(build_dir, 'foo').tap { |f| Dir.mkdir(f) } }
-      let(:project_json) { '{"commands": {"kestrel": "whatever"}}' }
-
-      let(:profile_d_script) do
-        allow_any_instance_of(AspNetCoreBuildpack::DotnetInstaller).to receive(:cached?).and_return(true)
-        allow_any_instance_of(AspNetCoreBuildpack::LibunwindInstaller).to receive(:cached?).and_return(true)
-        subject.release(build_dir)
-        IO.read(File.join(build_dir, '.profile.d', 'startup.sh'))
-      end
-
-      let(:web_process) do
-        yml = YAML.load(subject.release(build_dir))
-        yml.fetch('default_process_types').fetch('web')
-      end
-
-      before do
-        File.open(File.join(proj1, 'project.json'), 'w') do |f|
-          f.write project_json
-        end
-      end
-
-      it 'set HOME env variable in profile.d' do
-        expect(profile_d_script).to include('export HOME=/app')
-      end
-
-      it 'set LD_LIBRARY_PATH in profile.d' do
-        expect(profile_d_script).to include('export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/libunwind/lib')
-      end
-
-      it 'add Dotnet CLI to the PATH in profile.d' do
-        expect(profile_d_script).to include('$HOME/.dotnet')
-      end
-
-      it 'start command does not contain any exports' do
-        expect(web_process).not_to include('export')
-      end
-
-      it "runs 'dotnet run' for project" do
-        expect(web_process).to match('dotnet run --project foo')
-      end
-    end
-
-    context 'multiple directories contain project.json files but no .deployment file exists' do
-      let(:proj1) { File.join(build_dir, 'src', 'foo').tap { |f| FileUtils.mkdir_p(f) } }
-      let(:proj2) { File.join(build_dir, 'src', 'proj2').tap { |f| FileUtils.mkdir_p(f) } }
-      let(:proj3) { File.join(build_dir, 'src', 'proj3').tap { |f| FileUtils.mkdir_p(f) } }
-
-      before do
-        File.open(File.join(proj1, 'project.json'), 'w') do |f|
-          f.write '{"dependencies": {"dep1": "whatever"}}'
-        end
-        File.open(File.join(proj2, 'project.json'), 'w') do |f|
-          f.write '{"dependencies": {"dep1": "whatever"}}'
-        end
-        File.open(File.join(proj3, 'project.json'), 'w') do |f|
-          f.write '{"dependencies": {"dep1": "whatever"}}'
-        end
-      end
-
-      context '.deployment file exists' do
-        before do
-          File.open(File.join(build_dir, '.deployment'), 'w') do |f|
-            f.write "[config]\n"
-            f.write 'project=src/proj2'
-          end
-        end
-        let(:web_process) do
-          yml = YAML.load(subject.release(build_dir))
-          yml.fetch('default_process_types').fetch('web')
-        end
-        it 'runs the project specified in the .deployment file' do
-          expect(web_process).to match('dotnet run --project src/proj2')
         end
       end
     end

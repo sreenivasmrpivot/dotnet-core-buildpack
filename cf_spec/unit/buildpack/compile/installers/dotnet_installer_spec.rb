@@ -24,7 +24,7 @@ describe AspNetCoreBuildpack::DotnetInstaller do
   let(:shell) { double(:shell, env: {}) }
   let(:out) { double(:out) }
   let(:self_contained_app_dir) { double(:self_contained_app_dir, published_project: 'project1') }
-  let(:app_dir) { double(:app_dir, published_project: false, with_project_json: %w(['project1', 'project2'])) }
+  let(:app_dir) { double(:app_dir, published_project: false, with_project_json: %w(project1 project2)) }
   subject(:installer) { described_class.new(dir, cache_dir, shell) }
 
   describe '#cached?' do
@@ -80,17 +80,6 @@ describe AspNetCoreBuildpack::DotnetInstaller do
     end
   end
 
-  describe '#restore' do
-    it 'runs dotnet restore' do
-      expect(shell).to receive(:exec) do |*args|
-        cmd = args.first
-        expect(cmd).to match(/dotnet restore/)
-      end
-      subject.should_restore(app_dir)
-      subject.restore(out)
-    end
-  end
-
   describe '#should_install' do
     context 'app is self-contained' do
       before do
@@ -109,16 +98,16 @@ describe AspNetCoreBuildpack::DotnetInstaller do
     end
   end
 
-  describe '#should_restore' do
+  describe '#should_compile' do
     context 'app is portable or self-contained' do
       it 'returns false' do
-        expect(subject.should_restore(self_contained_app_dir)).not_to be_truthy
+        expect(subject.should_compile(self_contained_app_dir)).not_to be_truthy
       end
     end
 
     context 'app is not portable or self-contained' do
       it 'returns true' do
-        expect(subject.should_restore(app_dir)).to be_truthy
+        expect(subject.should_compile(app_dir)).to be_truthy
       end
     end
   end

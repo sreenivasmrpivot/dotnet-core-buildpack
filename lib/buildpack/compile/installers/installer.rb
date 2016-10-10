@@ -52,7 +52,15 @@ module AspNetCoreBuildpack
       nil
     end
 
+    def path_in_staging
+      path
+    end
+
     def should_install(_app_dir)
+      false
+    end
+
+    def in_runtime?
       false
     end
 

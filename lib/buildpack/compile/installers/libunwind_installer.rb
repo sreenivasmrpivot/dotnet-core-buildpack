@@ -71,6 +71,10 @@ module AspNetCoreBuildpack
       VERSION
     end
 
+    def in_runtime?
+      true
+    end
+
     private
 
     def dependency_name

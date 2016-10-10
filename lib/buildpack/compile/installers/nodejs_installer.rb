@@ -54,7 +54,7 @@ module AspNetCoreBuildpack
     end
 
     def path
-      bin_folder if File.exist?(File.join(@build_dir, cache_dir))
+      bin_folder
     end
 
     def should_install(app_dir)
@@ -64,6 +64,10 @@ module AspNetCoreBuildpack
 
     def version
       VERSION
+    end
+
+    def in_runtime?
+      false
     end
 
     private

@@ -70,10 +70,6 @@ EOT
       library_paths.compact.join(':')
     end
 
-    def get_source_start_cmd(project)
-      return "dotnet run --project #{project}" unless project.nil?
-    end
-
     def get_published_start_cmd(project, build_dir)
       return "./#{project}" if !project.nil? && File.exist?(File.join(build_dir, "#{project}"))
       return "dotnet #{project}.dll" if File.exist? File.join(build_dir, "#{project}.dll")
@@ -81,9 +77,6 @@ EOT
     end
 
     def get_start_cmd(app)
-      start_cmd = get_source_start_cmd(app.main_project_path)
-      return start_cmd unless start_cmd.nil?
-
       start_cmd = get_published_start_cmd(app.published_project, app.root)
       return start_cmd unless start_cmd.nil?
     end
