@@ -18,10 +18,7 @@ namespace HelloMvc
 
             app.UseStaticFiles();
 
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            app.UseDeveloperExceptionPage();
 
             app.UseMvc();
         }
