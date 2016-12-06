@@ -37,22 +37,16 @@ module AspNetCoreBuildpack
       @dir
     end
 
-    def with_command(cmd)
-      with_project_json.select { |d| !commands(d)[cmd].nil? && commands(d)[cmd] != '' }
-    end
-
     def with_project_json
       Dir.glob(File.join(@dir, '**', 'project.json')).map do |d|
         Pathname.new(File.dirname(d)).relative_path_from(Pathname.new(@dir))
       end
     end
 
-    def project_json(dir)
-      File.join(@dir, dir, 'project.json')
-    end
-
-    def commands(dir)
-      JSON.parse(IO.read(project_json(dir), encoding: 'bom|utf-8')).fetch('commands', {})
+    def with_csproj
+      Dir.glob(File.join(@dir, '**', '*.csproj')).map do |d|
+        Pathname.new(File.dirname(d)).relative_path_from(Pathname.new(@dir))
+      end
     end
 
     def deployment_file_project

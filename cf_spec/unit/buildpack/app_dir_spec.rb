@@ -24,6 +24,28 @@ describe AspNetCoreBuildpack::AppDir do
   let(:dir) { Dir.mktmpdir }
   subject(:appdir) { described_class.new(dir) }
 
+  context 'with multiple .csproj projects' do
+    let(:proj1) { File.join(dir, 'src', 'proj1').tap { |f| FileUtils.mkdir_p(f) } }
+    let(:proj2) { File.join(dir, 'src', 'föö').tap { |f| FileUtils.mkdir_p(f) } }
+    let(:nuget) { File.join(dir, '.nuget', 'dep').tap { |f| FileUtils.mkdir_p(f) } }
+
+    before do
+      File.open(File.join(proj1, 'proj1.csproj'), 'w') do |f|
+        f.write 'a csproj file'
+      end
+      File.open(File.join(proj2, 'föö.csproj'), 'w') do |f|
+        f.write 'another csproj file'
+      end
+      File.open(File.join(nuget, 'dep.csproj'), 'w') do |f|
+        f.write 'a third csproj file'
+      end
+    end
+
+    it 'finds all *.csproj files from non-hidden directories' do
+      expect(subject.with_csproj).to match_array([Pathname.new('src/proj1'), Pathname.new('src/föö')])
+    end
+  end
+
   context 'with multiple projects' do
     let(:proj1) { File.join(dir, 'src', 'proj1').tap { |f| FileUtils.mkdir_p(f) } }
     let(:proj2) { File.join(dir, 'src', 'föö').tap { |f| FileUtils.mkdir_p(f) } }
