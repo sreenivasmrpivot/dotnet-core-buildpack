@@ -64,8 +64,7 @@ module AspNetCoreBuildpack
       @shell.env['PATH'] = "$PATH:#{path}"
       project_list = @app_dir.with_project_json.join(' ')
 
-      verbosity = ENV['BP_DEBUG'].nil? ? 'minimal' : 'debug'
-      cmd = "bash -c 'cd #{build_dir}; dotnet restore --verbosity #{verbosity} #{project_list}'"
+      cmd = "bash -c 'cd #{build_dir}; dotnet restore #{project_list}'"
       @shell.exec(cmd, out)
     end
 

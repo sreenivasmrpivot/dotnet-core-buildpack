@@ -19,11 +19,11 @@ module AspNetCoreBuildpack
     def detect(dir)
       fromsource = false
 
-      arr = Dir.glob(File.join(dir, '**', 'project.json')).map { |file| File.dirname(file) }
-      arr += Dir.glob(File.join(dir, '**', '*.csproj')).map { |file| File.dirname(file) }
+      dirs_to_check = Dir.glob(File.join(dir, '**', 'project.json')).map { |file| File.dirname(file) }
+      dirs_to_check += Dir.glob(File.join(dir, '**', '*.csproj')).map { |file| File.dirname(file) }
 
-      arr.each do |directory|
-        fromsource = Dir.glob(File.join(directory, '**', '*.cs')).any? || Dir.glob(File.join(directory, '*.cs')).any?
+      dirs_to_check.each do |directory|
+        fromsource = Dir.glob(File.join(directory, '*.cs')).any? || Dir.glob(File.join(directory, '**', '*.cs')).any?
         break if fromsource
       end
 

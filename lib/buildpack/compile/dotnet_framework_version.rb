@@ -45,7 +45,13 @@ module AspNetCoreBuildpack
     private
 
     def restored_framework_versions
-      Dir.glob(File.join(@nuget_cache_dir, 'packages', 'Microsoft.NETCore.App', '*')).map do |path|
+      #if 'project.json'
+        netcore_app_dir = 'Microsoft.NETCore.App'
+      #elsif 'csproj'
+      #  netcore_app_dir = 'microsoft.netcore.app'
+      #end
+
+      Dir.glob(File.join(@nuget_cache_dir, 'packages', netcore_app_dir, '*')).map do |path|
         File.basename(path)
       end
     end

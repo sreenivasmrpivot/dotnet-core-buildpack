@@ -57,7 +57,7 @@ module AspNetCoreBuildpack
       app_has_project_json = @app_dir.with_project_json.any?
       app_has_csproj = @app_dir.with_csproj.any?
 
-      if app_has_csproj && app_has_project_json
+      if  app_has_csproj && app_has_project_json
         warning = "Found both project.json and *.csproj files in app:\n" +
                   "Directories with *.csproj: #{@app_dir.with_csproj.join(', ')}\n" +
                   "Directories with project.json: #{@app_dir.with_project_json.join(', ')}\n" +

@@ -50,8 +50,8 @@ dependencies:
   - cflinuxfs2
 - name: dotnet
   version: 1.0.0-preview3-004056
-  uri: file:///tmp/checksum/dotnet.1.0.0-preview3-004056.linux-amd64.tar.gz
-  md5: ec2a8687b0f3f54de00bf8e7d71c2dad
+  uri: https://buildpacks.cloudfoundry.org/dependencies/dotnet/dotnet.1.0.0-preview3-004056.linux-amd64.tar.gz
+  md5: f3808b1b6d2d632d6392b1b0f9762e97
   cf_stacks:
   - cflinuxfs2
 - name: bower

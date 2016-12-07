@@ -18,6 +18,7 @@ require_relative '../../app_dir'
 
 module AspNetCoreBuildpack
   class Installer
+
     VERSION_FILE = 'VERSION'.freeze
 
     def self.descendants
