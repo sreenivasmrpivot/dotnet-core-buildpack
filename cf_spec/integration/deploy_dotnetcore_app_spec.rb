@@ -13,11 +13,17 @@ describe 'CF ASP.NET Core Buildpack' do
     let(:app_name) { 'asp_web_app' }
 
     it 'displays a simple text homepage' do
-      expect(app).to be_running
-      expect(app).to have_logged(/ASP.NET Core buildpack is done creating the droplet/)
 
-      browser.visit_path('/')
-      expect(browser).to have_body('Hello World!')
+      begin
+        expect(app).to be_running
+        expect(app).to have_logged(/ASP.NET Core buildpack is done creating the droplet/)
+
+        browser.visit_path('/')
+        expect(browser).to have_body('Hello World!')
+      rescue
+        require 'pry'
+        binding.pry
+      end
     end
 
     context 'with BP_DEBUG enabled' do
@@ -40,11 +46,17 @@ describe 'CF ASP.NET Core Buildpack' do
     let(:app_name) { 'asp_mvc_app' }
 
     it 'displays a page served through a controller and view' do
-      expect(app).to be_running
-      expect(app).to have_logged(/ASP.NET Core buildpack is done creating the droplet/)
 
-      browser.visit_path('/')
-      expect(browser).to have_body('Hello! Served via a controller and view!')
+      begin
+        expect(app).to be_running
+        expect(app).to have_logged(/ASP.NET Core buildpack is done creating the droplet/)
+
+        browser.visit_path('/')
+        expect(browser).to have_body('Hello! Served via a controller and view!')
+      rescue
+        require 'pry'
+        binding.pry
+      end
     end
   end
 
