@@ -5,6 +5,7 @@
   },
   "dependencies" : {
     "Microsoft.AspNetCore.Server.Kestrel": "*",
+    "Microsoft.Extensions.Logging.Console": "*",
     "Microsoft.NETCore.App": {
       "type": "platform",
       "version": "1.1.*"
