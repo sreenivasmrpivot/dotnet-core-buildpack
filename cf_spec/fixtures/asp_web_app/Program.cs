@@ -13,7 +13,10 @@ namespace HelloWeb
                           .AddCommandLine(args)
                           .Build();
             var host = new WebHostBuilder()
-                        .UseKestrel()
+                        .UseKestrel(options =>
+                        {
+                            options.UseConnectionLogging();
+                        })
                         .UseConfiguration(config)
                         .UseContentRoot(Directory.GetCurrentDirectory())
                         .UseStartup<Startup>()
