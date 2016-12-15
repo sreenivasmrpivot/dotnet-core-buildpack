@@ -9,7 +9,7 @@ describe 'CF ASP.NET Core Buildpack' do
     Machete::CF::DeleteApp.new.execute(app)
   end
 
-  context 'deploying an app with multiple projects' do
+  context 'deploying an app with multiple projects without a ./ in the deployment path' do
     context 'app uses project.json' do
       let(:app_name) { 'app_with_multiple_projects' }
 
@@ -35,4 +35,19 @@ describe 'CF ASP.NET Core Buildpack' do
       end
     end
   end
+
+  context 'deploying an app with multiple projects with a ./ in the deployment path' do
+    context 'app uses msbuild' do
+      let(:app_name) { 'app_with_multi_dot_slash_paths_msbuild' }
+
+      it 'compiles both apps' do
+        expect(app).to be_running
+        browser.visit_path('/')
+        expect(browser).to have_body("Hello, I'm a string!")
+        expect(app).to have_logged('Hello from a secondary project!')
+      end
+    end
+  end
+
+
 end

@@ -82,10 +82,20 @@ module AspNetCoreBuildpack
 
         path = project_json?(@dir) ? get_project_dir(deployment_project) : Pathname.new(deployment_project)
 
+        path = remove_dot_slash(path)
         project_path = path if paths.include?(path)
       end
 
       project_path
+    end
+
+    def remove_dot_slash(project_path)
+      project_path_as_string = project_path.to_s
+      project_path_result = project_path
+      if(project_path_as_string.start_with?("./"))
+        project_path_result =  Pathname.new(project_path_as_string[2..-1])
+      end
+      project_path_result
     end
 
     def get_project_dir(project_path)
