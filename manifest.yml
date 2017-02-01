@@ -23,9 +23,30 @@ url_to_dependency_map:
 - match: bower-(\d+\.\d+\.\d+).tgz
   name: bower
   version: "$1"
+dependency_deprecation_dates:
+- match: .*
+  version_line: WeRuleUnWind
+  name: libunwind
+  date: 2017-02-10
+- match: .*
+  version_line: WeRuleDotnet
+  name: dotnet
+  date: 2017-02-11
+- match: .*
+  version_line: WeRuleDotnetFramework
+  name: dotnet-framework
+  date: 2017-02-12
+- match: .*
+  version_line: WeRuleBower
+  name: bower
+  date: 2017-02-13
+- match: .*
+  version_line: WeRuleNode
+  name: node
+  date: 2017-02-14
 dependencies:
 - name: libunwind
-  version: 1.2
+  version: "1.2"
   cf_stacks:
   - cflinuxfs2
   uri: https://buildpacks.cloudfoundry.org/dependencies/manual-binaries/dotnet/libunwind-1.2-linux-x64-f56347d4.tgz
