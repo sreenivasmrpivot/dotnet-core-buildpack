@@ -97,6 +97,8 @@ EOT
     end
 
     def get_start_cmd(app)
+      puts app.main_project_path
+      puts app.inspect
       start_cmd = get_source_start_cmd(app.main_project_path)
       return start_cmd unless start_cmd.nil?
 
